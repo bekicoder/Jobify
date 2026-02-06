@@ -3,7 +3,7 @@ import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "next/navigation";
-
+import { usePathname } from "next/navigation";
 const JobDetailsPanel = ({
   proposal_ids,
   job,
@@ -17,7 +17,35 @@ const JobDetailsPanel = ({
 }) => {
   const [opend, setOpend] = useState<boolean>(false);
   const date = job.created_at.split(" ");
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  const params = useSearchParams()
+  const route = params.get("route");
+  useEffect(()=>{
+    if(route == "appliedJobs" || route == "savedJobs" ) setJobdetail(null);
+  },[route])
+  const [isSaved,setSaved] = useState<boolean>(saved_ids.some((s) => s == job.id));
+  const handleSave = async () => {
+    const save = await fetch("/api/saveJob", {
+      method: "POST",
+      body: JSON.stringify({ jobId: job.id,saved:isSaved }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const {msg,id:savedId,savedJob} =await save.json();
+    
+    if (msg == "successful") {
+      setSaved_ids(prev => prev.includes(savedId) ? prev.filter(id => id !== savedId) : [...prev, savedId]);
+      setSavedJobs((prev)=>isSaved ? prev.filter(p=>p.id !== job.id) : [...prev,savedJob])
+      setSaved(!isSaved)
+    }
+  };
+  
+  const [isApplied,setApplied] = useState();
+  const appliedId = proposal_ids.some((p) => {
+    return p == job.id;
+  })
+  useEffect(()=>{
+    setApplied(appliedId)
+  },[])
+   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.target);
     const article = fd.get("article");
@@ -39,29 +67,9 @@ const JobDetailsPanel = ({
       const data = await fetch(`/api/proposal?id=${_res.id}`);
       const updatedData = await data.json();
       setProposal_ids((prev) => [...prev, _res.id]);
+       setApplied(_res.id)
     }
   }
-
-  const [isSaved,setSaved] = useState<boolean>(saved_ids.some((s) => s == job.id));
-  const handleSave = async () => {
-    const save = await fetch("/api/saveJob", {
-      method: "POST",
-      body: JSON.stringify({ jobId: job.id,saved:isSaved }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const {msg,id:savedId,savedJob} =await save.json();
-    
-    if (msg == "successful") {
-      setSaved_ids(prev => prev.includes(savedId) ? prev.filter(id => id !== savedId) : [...prev, savedId]);
-      setSavedJobs((prev)=>isSaved ? prev.filter(p=>p.id !== job.id) : [...prev,savedJob])
-      setSaved(!isSaved)
-      console.log(msg,savedId,savedJob);
-    }
-  };
-  const isApplied = proposal_ids.some((p) => {
-    return p == job.id;
-  });
-  
   return (
     <div className="w-full pl-12 h-full md:h-[calc(100vh-5rem)] rounded-2xl bg-white overflow-y-auto">
       {/*proposal form */}
@@ -84,9 +92,9 @@ const JobDetailsPanel = ({
             >
               <i className="fa-solid fa-times"></i>
             </button>
-            <input name="id" value={job.id} className="sr-only" />
-            <input name="location" value={job.location} className="sr-only" />
-            <input name="posted_by" value={job.posted_by} className="sr-only" />
+            <input name="id" readOnly value={job.id} className="sr-only" />
+            <input name="location" readOnly value={job.location} className="sr-only" />
+            <input name="posted_by" readOnly value={job.posted_by} className="sr-only" />
             <textarea
               placeholder="Enter proposal details..."
               name="article"
@@ -131,13 +139,17 @@ const JobDetailsPanel = ({
       <div className="w-full flex justify-between pr-4">
         <span className=" text-sm flex items-center font-medium text-gray-600">
           {job.salary_range} • {job.location}&nbsp;&nbsp;&nbsp;{" "}
-          <Image
-            width={20}
-            height={20}
-            src={job.flag}
-            alt={job.name + " flag"}
-            className="h-fit aspect-video"
-          />{" "}
+          <div className="aspect-video w-6 relative">
+                            {
+                            <Image
+                              src={job.flag}
+                              alt={job.location + " flag"}
+                              fill
+                              sizes="20px"
+                              className="object-contain"
+                            />
+                          }
+                            </div>{" "}
           &nbsp;&nbsp;• {job.jobtype}
         </span>
         <span className="text-sm">
@@ -328,45 +340,56 @@ const Employee = () => {
 
   useEffect(() => {
     const fethJobs = async () => {
-      const jobCount = await fetch("/api/jobs");
-      const count = await jobCount.json();
-      const jobs_ = [];
-      for (let i = 1; i <= count.count; i++) {
-        const _res = await fetch(`/api/jobs`, {
-          method: "POST",
-          body: JSON.stringify({ id: i }),
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-        const Job = await _res.json();
-        jobs_.push(Job);
-        setJobs((prev) => [...prev, Job]);
-      }
-      const prop_res = await fetch("/api/proposal/?role=employee", {
-        cache: "no-store",
-      });
-      const props = await prop_res.json();
-      const fullProposal = props.data.map((p) => {
-        setProposal_ids((prev) => [...prev, p.career_id]);
-        const index = jobs_.findIndex((j) => {
-          return j.id == p.career_id;
-        });
-        const career = jobs_[index];
-        return {
-          id: p.career_id,
-          career_owner: p.career_owner,
-          created_at: p.created_at,
-          name: p.name,
-          detail: p.proposal,
-          sender: p.sender,
-          location: p.sender_location,
-          flag: career.flag,
-          title: career.title,
-        };
-      });
+  const jobCount = await fetch("/api/jobs");
+  const { count } = await jobCount.json();
 
-      setProposals(fullProposal);
+  const jobs_: any[] = [];
+
+  for (let i = 1; i <= count; i++) {
+    const res = await fetch("/api/jobs", {
+      method: "POST",
+      body: JSON.stringify({ id: i }),
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+
+    const job = await res.json();
+    jobs_.push(job);
+  }
+
+  // ✅ set once
+  setJobs(jobs_);
+  const prop_res = await fetch("/api/proposal/?role=employee", {
+    cache: "no-store",
+  });
+
+  const props = await prop_res.json();
+
+  const proposalIds: number[] = [];
+
+  const fullProposal = props.data.map((p) => {
+    proposalIds.push(p.career_id);
+
+    const career = jobs_.find((j) => j.id === p.career_id);
+
+    return {
+      id: p.career_id,
+      career_owner: p.career_owner,
+      created_at: p.created_at,
+      name: p.name,
+      detail: p.proposal,
+      sender: p.sender,
+      location: p.sender_location,
+      flag: career?.flag,
+      title: career?.title,
     };
+  });
+
+  // ✅ set once
+  setProposal_ids(proposalIds);
+  setProposals(fullProposal);
+};
+
     const fetchSaved =async()=>{
       const savedRes =await fetch("/api/saveJob")
       const {savedJobs,data} = await savedRes.json()
@@ -378,8 +401,8 @@ const Employee = () => {
     }
     fetchSaved()
     fethJobs();
-  }, []);
-
+  },[]);
+  
   return (
     <div className="w-full md:h-full pt-16 flex flex-col md:flex-row overflow-auto bg-[#f6f9fc] md:fixed">
       <aside
@@ -576,7 +599,9 @@ const Employee = () => {
                 </thead>
                 <tbody>
                   {route == null &&
+                  
                     _jobs.map((p, i) => (
+                        
                       <tr
                         onClick={() => setJobdetail(p.id)}
                         key={i}
@@ -586,15 +611,18 @@ const Employee = () => {
                           {p.title}
                         </td>
                         <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
-                          {
+                          <div className="aspect-video w-5 relative">
+                            {
                             <Image
-                              width={20}
-                              height={20}
                               src={p.flag}
                               alt={p.location + " flag"}
-                              className="h-fit aspect-video"
+                              fill
+                              sizes="20px"
+                              className="object-contain"
                             />
-                          }{" "}
+                          }
+                            </div>
+                            {" "}
                           {p.location}
                         </td>
                         <td className="text-left text-sm px-4 py-1">
@@ -614,15 +642,19 @@ const Employee = () => {
                           {p.title}
                         </td>
                         <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
-                          {
+                          <div className="aspect-video w-5 relative">
+                            {console.log(p.flag)}
+                            {
+                                
                             <Image
-                              width={20}
-                              height={20}
                               src={p.flag}
                               alt={p.location + " flag"}
-                              className="h-fit aspect-video"
+                              fill
+                              sizes="20px"
+                              className="object-contain"
                             />
-                          }{" "}
+                          }
+                            </div>{" "}
                           {p.location}
                         </td>
                         <td className="text-left text-sm px-4 py-1">
@@ -641,15 +673,17 @@ const Employee = () => {
                           {p.title}
                         </td>
                         <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
-                          {
+                          <div className="aspect-video w-5 relative">
+                            {
                             <Image
-                              width={20}
-                              height={20}
                               src={p.flag}
                               alt={p.location + " flag"}
-                              className="h-fit aspect-video"
+                              fill
+                              sizes="20px"
+                              className="object-contain"
                             />
-                          }{" "}
+                          }
+                            </div>
                           {p.location}
                         </td>
                         <td className="text-left text-sm px-4 py-1">
