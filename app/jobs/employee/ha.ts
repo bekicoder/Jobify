@@ -1462,6 +1462,38 @@ Work on varied electrical projects while gaining hands-on technical experience.
 `
 }
 ];  
+
+"use client"
+import { useEffect,useState } from "react";
+import Employee from "./components/employee";
+import Employer from "./components/emloyer"
+
+const Jobs = ()=>{
+    interface accountType{
+        name : string;
+        email: string;
+        role: string;
+        profile:string;
+    }
+    const [user,setUser] = useState<accountType | null>(null)
+    useEffect(()=>{
+        const fetchU = async()=>{
+            const res =await fetch("/api/users/");
+            const data =await res.json();
+            if(data.message == "Unauthorized") return;
+            setUser(data);
+            }
+       fetchU() 
+    })
+    
+    return(
+        <div className="overflow-auto md:h-[calc(100vh)] pt-16">
+            {user?.role == "/employer" ? <Employer/> : <Employee/> }
+       </div>
+    )
+}
+
+export default Jobs;
 /*<div className="flex justify-center mt-5 text-[18px] font-medium text-indigo-500 gap-4 cursor-pointer">
                   <a>1</a>
                   <a>2</a>

@@ -1,11 +1,13 @@
 "use client"
 import { useEffect,useState } from "react";
+import  Link  from "next/link"; 
 const Hero = () => {
   const [user,setUser] = useState()
 useEffect(()=>{
   const fetchUser = async()=>{
     const res = await fetch('/api/users')
-     setUser(await res.json())
+    const data =await res.json();
+     setUser(data)
   }
   fetchUser()
 },[])
@@ -14,9 +16,9 @@ useEffect(()=>{
         <div className="px-10 pt-24  wrap-break-word flex flex-1 flex-col gap-5" >
           <h1 className="font-bold text-5xl text-[#0a2540] leading-tight">Step Into Your Future with the Perfect Job</h1>
           <p>Browse thousands of openings, apply in seconds, and land the role you deserve.</p>
-          <a href={user ? (user.role == "employee" ? "/jobs/employee" : "/jobs/employer") : "employee" } className="w-fit px-4 py-2 rounded-full bg-sky-500 text-white font-bold cursor-pointer hover:bg-[#0a2540]">
-                        Find Jobs&nbsp;<i className="fa-solid fa-chevron-right scale-75 my-auto"></i>
-          </a>
+          <Link href={user?.role == "employee" ? "/jobs" : "/dashboard"} className="w-fit px-4 py-2 rounded-full bg-sky-500 text-white font-bold cursor-pointer hover:bg-[#0a2540]">
+                        {user?.role == "employee" ? "Find Jobs" : "Dashboard"}&nbsp;<i className="fa-solid fa-chevron-right scale-75 my-auto"></i>
+          </Link>
         </div>
         <div className="w-full md:w-[50%] relative pt-16 flex overflow-hidden gap-7">
           <div className="flex flex-col gap-7">

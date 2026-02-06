@@ -16,6 +16,7 @@ export async function GET(req:NextRequest){
         return NextResponse.json({data:rows[0]},{status:200})
     }
     const decoded = await jwt.verify(token,process.env.JWT_SECRET!)
+    console.log(decoded)
     const sql = `select * from proposals where ${role == "employer" ? "career_owner" : "sender" } = $1 order by id desc;`
     const {rows} = await db.query(sql,[decoded.email])
     return NextResponse.json({data:rows},{status:200})
@@ -40,9 +41,9 @@ export async function POST(req:NextRequest){
         return NextResponse.json({error:"Unauthorized"},{status:401})
     }
     const decoded = await jwt.verify(token,process.env.JWT_SECRET!)
-    const values = [decoded.name,decoded.email,decoded.location,proposal.id,proposal.article,proposal.owner]
+    const values = [decoded.name,decoded.email,decoded.location,proposal.id,proposal.article,proposal.owner,decoded.flag]
     console.log(values)
-    const {rows} = await db.query("insert into proposals (name,sender,sender_location,career_id,proposal,career_owner) values($1,$2,$3,$4,$5,$6) RETURNING id;",values)
+    const {rows} = await db.query("insert into proposals (name,sender,sender_location,career_id,proposal,career_owner,sender_flag) values($1,$2,$3,$4,$5,$6,$7) RETURNING id;",values)
     return NextResponse.json({msg:"successful",id:rows[0].id},{status:200})
 }catch(err){
     console.log(err)
