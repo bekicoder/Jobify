@@ -25,7 +25,7 @@ export default function NavBar(){
         fetchData()
     },[])
     return(
-        <nav className={`fixed z-10000 top-0 w-full bg-white h-12 items-center justify-between ${pathname == "/account" ? "hidden" : "flex"}`}>
+        <nav className={`z-1 p-0 w-full bg-white h-12 items-center justify-between ${pathname == "/account" ? "hidden" : "flex"}`}>
             <Link href="/" className="relative m-2 flex gap-4 cursor-pointer">
                 <div className="relative">
                 <span className="block w-6 h-6 rounded-full bg-sky-500/50"></span>

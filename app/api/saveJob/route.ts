@@ -10,10 +10,9 @@ export async function GET(req: nextRequest) {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET!);
 
     const { rows } = await db.query(
-      "select * from savedJobs where user_id = $1",
+      "select * from savedJobs where user_id = $1 order by id desc",
       [decoded.id],
     );
-    console.log(rows)
     const savedJobs = await Promise.all(
       rows.map((sj) =>
         db
@@ -44,6 +43,7 @@ export async function POST(req: nextRequest) {
     const sql = !saved
       ? "insert into savedJobs (career_id,user_id) values($1,$2) RETURNING career_id;"
       : "delete from savedJobs where career_id=$1;";
+      console.log(!saved,"delete from savedJobs where career_id=$1",id)
     const values = [decoded.id];
     !saved && values.unshift(id);
     const { rows } = await db.query(sql, values);

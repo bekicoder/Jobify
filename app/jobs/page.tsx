@@ -17,11 +17,6 @@ const JobDetailsPanel = ({
 }) => {
   const [opend, setOpend] = useState<boolean>(false);
   const date = job.created_at.split(" ");
-  const params = useSearchParams()
-  const route = params.get("route");
-  useEffect(()=>{
-    if(route == "appliedJobs" || route == "savedJobs" ) setJobdetail(null);
-  },[route])
   const [isSaved,setSaved] = useState<boolean>(saved_ids.some((s) => s == job.id));
   const handleSave = async () => {
     const save = await fetch("/api/saveJob", {
@@ -30,10 +25,11 @@ const JobDetailsPanel = ({
       headers: { "Content-Type": "application/json" },
     });
     const {msg,id:savedId,savedJob} =await save.json();
-    
+    console.log(job,msg,job.id)
+
     if (msg == "successful") {
-      setSaved_ids(prev => prev.includes(savedId) ? prev.filter(id => id !== savedId) : [...prev, savedId]);
-      setSavedJobs((prev)=>isSaved ? prev.filter(p=>p.id !== job.id) : [...prev,savedJob])
+      setSaved_ids(prev => prev.includes(savedId) ? prev.filter(id => id !== savedId) : [savedId,...prev]);
+      setSavedJobs((prev)=>isSaved ? prev.filter(p=>p.id !== job.id) : [savedJob,...prev])
       setSaved(!isSaved)
     }
   };
@@ -66,12 +62,12 @@ const JobDetailsPanel = ({
       setOpend(false);
       const data = await fetch(`/api/proposal?id=${_res.id}`);
       const updatedData = await data.json();
-      setProposal_ids((prev) => [...prev, _res.id]);
-       setApplied(_res.id)
+      setProposal_ids((prev) => [_res.id,...prev]);
+      setApplied(_res.id)
     }
   }
   return (
-    <div className="w-full pl-12 h-full md:h-[calc(100vh-5rem)] rounded-2xl bg-white overflow-y-auto">
+    <div className="w-full z-100000 pl-12 h-full md:h-[calc(100vh-5rem)] rounded-2xl bg-white overflow-y-auto">
       {/*proposal form */}
       {opend && (
         <form
@@ -146,7 +142,8 @@ const JobDetailsPanel = ({
                               alt={job.location + " flag"}
                               fill
                               sizes="20px"
-                              className="object-contain"
+                              className={`object-contain ${opend && "hidden"}`}
+                              
                             />
                           }
                             </div>{" "}
@@ -321,9 +318,11 @@ const Employee = () => {
   const [account, setAccount] = useState<accountType | null>(null);
   const [proposals, setProposals] = useState([]);
   const [proposal_ids, setProposal_ids] = useState([]);
-  const [appliedJobs, setAppliedJobs] = useState();
   const [savedJobs, setSavedJobs] = useState([]);
+  const [filteredJob, setFilteredJob] = useState([]);
+  const [fillteredIds,setFiltereIds] = useState<number[]>([])
   const [saved_ids, setSaved_ids] = useState<number[]>([]);
+  
   function toggleMenu(menu: string) {
     if (openedMenu == menu) {
       setOpenedMenu(null);
@@ -331,6 +330,9 @@ const Employee = () => {
       setOpenedMenu(menu);
     }
   }
+  useEffect(()=>{
+    if(route == "appliedJobs" || route == "savedJobs" ) setJobdetail(null);
+  },[route])
 
   function toggleCheckbox(type: string, id: number) {
     if (type == "catagory") {
@@ -342,9 +344,7 @@ const Employee = () => {
     const fethJobs = async () => {
   const jobCount = await fetch("/api/jobs");
   const { count } = await jobCount.json();
-
   const jobs_: any[] = [];
-
   for (let i = 1; i <= count; i++) {
     const res = await fetch("/api/jobs", {
       method: "POST",
@@ -354,7 +354,7 @@ const Employee = () => {
     });
 
     const job = await res.json();
-    jobs_.push(job);
+    jobs_.unshift(job);
   }
 
   // ✅ set once
@@ -368,10 +368,9 @@ const Employee = () => {
   const proposalIds: number[] = [];
 
   const fullProposal = props.data.map((p) => {
-    proposalIds.push(p.career_id);
-
-    const career = jobs_.find((j) => j.id === p.career_id);
-
+    proposalIds.unshift(p.career_id);
+    
+    const career = jobs_.find((j) => j.id == p.career_id);
     return {
       id: p.career_id,
       career_owner: p.career_owner,
@@ -393,6 +392,7 @@ const Employee = () => {
     const fetchSaved =async()=>{
       const savedRes =await fetch("/api/saveJob")
       const {savedJobs,data} = await savedRes.json()
+      console.log(savedJobs,"hi bekam ",data)
       savedJobs.forEach(s => {
         setSaved_ids((prev)=>[...prev,s.career_id])
       });
@@ -402,7 +402,25 @@ const Employee = () => {
     fetchSaved()
     fethJobs();
   },[]);
-  
+      const filterd = []
+  function handleFilter(filterType:string,option:string,status:boolean){
+    console.log(status)
+    if(!option || !filterType) return console.log("Invalid filter options");
+     _jobs.forEach((j)=>{
+
+        const isFiltered = fillteredIds.some((i)=>{ return i==j.id })
+        if(!status){
+        if(isFiltered || j[filterType] != option) return;
+        console.log(j)
+        setFiltereIds((prev)=>{return[j.id,...prev]})
+        setFilteredJob((prev)=>{return [j,...prev]})
+        filterd.push(j)
+     } else {
+
+     }
+  })
+  }
+
   return (
     <div className="w-full md:h-full pt-16 flex flex-col md:flex-row overflow-auto bg-[#f6f9fc] md:fixed">
       <aside
@@ -439,9 +457,10 @@ const Employee = () => {
                   <label
                     key={i}
                     className="flex cursor-pointer items-center gap-2 text-sm font-medium"
+                    onClick={()=>{handleFilter("catagory",job.title)}}
                   >
                     <input
-                      onChange={() => toggleCheckbox("catagory", job.id)}
+                      onChange={(e) =>{ toggleCheckbox("catagory", job.id); handleFilter("catagory",job.title,e.target.checked)}}
                       type="checkbox"
                       value={job.title}
                       className="accent-sky-500 text-amber-50 peer sr-only"
@@ -578,7 +597,7 @@ const Employee = () => {
               proposals={proposals}
               setProposals={setProposals}
               proposal_ids={proposal_ids}
-              job={_jobs[selectedJob - 1]}
+              job={()=>_jobs.find((j)=>j.id==selectedJob)}
               setJobdetail={setJobdetail}
             />
           ) : (
@@ -606,7 +625,7 @@ const Employee = () => {
                         onClick={() => setJobdetail(p.id)}
                         key={i}
                         className="even:bg-gray-50 hover:bg-gray-100 cursor-pointer"
-                      >
+                      >{console.log(p,p.id)}
                         <td className="text-left text-sm px-4 py-2 text-indigo-500 font-medium">
                           {p.title}
                         </td>
@@ -643,7 +662,6 @@ const Employee = () => {
                         </td>
                         <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
                           <div className="aspect-video w-5 relative">
-                            {console.log(p.flag)}
                             {
                                 
                             <Image
