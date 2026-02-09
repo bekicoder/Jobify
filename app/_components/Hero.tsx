@@ -15,10 +15,10 @@ const Hero = () => {
       const selectedLang = localStorage.getItem("lang");
 
       if (!selectedLang) {
-        const content = await Contents(35); // default language
+        const content = await Contents(1); // default language
         setContent(content);
         setLang("english");
-        localStorage.setItem("lang", "35");
+        localStorage.setItem("lang", "1");
       } else {
         const content = await Contents(Number(selectedLang));
         setContent(content);
