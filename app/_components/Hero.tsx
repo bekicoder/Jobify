@@ -6,14 +6,20 @@ import { ContentType } from "./Contents";
 const Hero = () => {
   const [user, setUser] = useState();
   const [contents,setContent] = useState<ContentType>()
-    
-  useEffect(()=>{
-    const selectedLang = localStorage.setItem("lang", "english");
-    if(!selectedLang){
-      setContent(Contents("english"))
-      localStorage.setItem("lang",35)
-    }
-  },[])
+  const [lang,setLang] = useState<string>("english")
+
+  useEffect(() => {
+  const selectedLang = localStorage.getItem("lang");
+
+  if (!selectedLang) {
+    setContent(Contents(35)); // default language code
+    setLang("english");        // your state
+    localStorage.setItem("lang", "35"); // store as string
+  } else {
+    setContent(Contents(Number(selectedLang))); // convert to number
+  }
+}, []);
+
   useEffect(() => {
     const fetchUser = async () => {
       const res = await fetch("/api/users");
