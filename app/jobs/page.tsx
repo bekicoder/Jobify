@@ -1,10 +1,11 @@
 "use client";
 import Image from "next/image";
-import React,{ FormEvent, useEffect, useState,SetStateAction } from "react";
+import React,{ FormEvent, useEffect, useState,SetStateAction, Suspense } from "react";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "next/navigation";
 import { proposalType } from "../dashboard/page";
 type jobType = {
+    [key:string]:unknown
     id: number;
     catagory: string;
     created_at: string;
@@ -21,7 +22,7 @@ type jobType = {
   
 interface DetailsPanelType{
   proposal_ids:number[];
-  job:()=>jobType;
+  job:jobType;
   setJobdetail:React.Dispatch<SetStateAction<number | null>>
   proposals:proposalType[]
   setProposal_ids:React.Dispatch<SetStateAction<number[]>>
@@ -33,7 +34,7 @@ interface DetailsPanelType{
 
 const JobDetailsPanel = ({
   proposal_ids,
-  job:jobDetail,
+  job,
   setJobdetail,
   proposals,
   setProposal_ids,
@@ -41,7 +42,6 @@ const JobDetailsPanel = ({
   setSaved_ids,
   setSavedJobs,
 }:DetailsPanelType) => {
-  const job = jobDetail()
   const [opend, setOpend] = useState<boolean>(false);
   console.log(job)
   const date = job.created_at.split(" ");
@@ -231,7 +231,7 @@ const JobDetailsPanel = ({
   );
 };
 
-const Employee = () => {
+const EmployeePage = () => {
   const searchParams = useSearchParams();
   const route = searchParams.get("route");
   
@@ -367,14 +367,26 @@ const Employee = () => {
   }
   const [catagories, setCatagories] = useState<{ [key: number]: boolean }>({});
   const [openedMenu, setOpenedMenu] = useState<string | null>(null);
-  const [selectedJob, setJobdetail] = useState<number | null>();
+  const [selectedJob, setJobdetail] = useState<number | null>(null);
   const [account, setAccount] = useState<accountType | null>(null);
   const [proposals, setProposals] = useState([]);
   const [proposal_ids, setProposal_ids] = useState<number[]>([]);
   const [savedJobs, setSavedJobs] = useState<jobType[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState<jobType[]>([]);
   const [saved_ids, setSaved_ids] = useState<number[]>([]);
-
+  let selectedJ = {
+    id: 0,
+    catagory: "",
+    created_at: "",
+    detail: "",
+    flag: "",
+    jobtype: "",
+    location: "",
+    posted_by: "",
+    salary_range: "",
+    title:"",
+    updated_at:"",
+  }
   function toggleMenu(menu: string) {
     if (openedMenu == menu) {
       setOpenedMenu(null);
@@ -383,6 +395,7 @@ const Employee = () => {
     }
   }
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setJobdetail(null);
   }, [route]);
 
@@ -417,15 +430,15 @@ const Employee = () => {
       const proposalIds: number[] = [];
 
       const fullProposal = props.data.map((p:proposalType) => {
-        proposalIds.unshift(p.career_id);
+        proposalIds.unshift(Number(p.career_id));
 
-        const career = jobs_.find((j) => j.id == p.career_id);
+        const career = jobs_.find((j) => j.id == Number(p.career_id));
         return {
           id: p.career_id,
           career_owner: p.career_owner,
           created_at: p.created_at,
           name: p.name,
-          detail: p.proposal,
+          detail: p.detail,
           sender: p.sender,
           location: career?.location,
           flag: career?.flag,
@@ -457,7 +470,6 @@ const Employee = () => {
     setFilteredJobs((prev) => {
       if (status) {
         // ADD filter
-
         return [
           ..._jobs.filter((j) => j[filterType] === option && !prev.includes(j)),
           ...prev,
@@ -595,7 +607,7 @@ const Employee = () => {
                         handleFilter("jobtype", t.name, e.target.checked);
                       }}
                       type="checkbox"
-                      value={t.title}
+                      value={t.name}
                       className="accent-sky-500 text-amber-50 peer sr-only"
                     />
                     <span className="w-4 h-4 aspect-square flex-none bg-sky-200 text-sky-200 peer-checked:text-white rounded block peer-checked:bg-sky-600 flex items-center justify-center">
@@ -656,13 +668,8 @@ const Employee = () => {
               saved_ids={saved_ids}
               setProposal_ids={setProposal_ids}
               proposals={proposals}
-              setProposals={setProposals}
               proposal_ids={proposal_ids}
-              job={() =>
-                _jobs.find((j) => {
-                  return j.id == selectedJob;
-                })
-              }
+              job={selectedJ} 
               setJobdetail={setJobdetail}
             />
           ) : (
@@ -689,6 +696,10 @@ const Employee = () => {
                       <tr
                         onClick={() => {
                           setJobdetail(p.id);
+                          const selected =_jobs.find((j) => {
+                  return j.id == selectedJob;
+                })
+                if(selected){selectedJ = selected}
                         }}
                         key={i}
                         className="even:bg-gray-50 hover:bg-gray-100 cursor-pointer"
@@ -717,7 +728,7 @@ const Employee = () => {
                     ))}
 
                   {route == "appliedJobs" &&
-                    proposals.map((p, i) => (
+                    savedJobs.map((p, i) => (
                       <tr
                         onClick={() => setJobdetail(p.id)}
                         key={i}
@@ -784,4 +795,10 @@ const Employee = () => {
   );
 };
 
-export default Employee;
+export default function Employee(){
+  return(
+    <Suspense fallback={<div>Loading...</div>}>
+      <EmployeePage/>
+    </Suspense>
+  )
+};
