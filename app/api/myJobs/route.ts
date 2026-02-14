@@ -83,15 +83,18 @@ export async function GET(req: NextRequest) {
   }
   const data = jwt.verify(token, process.env.JWT_SECRET!);
   const decoded = data as JwtPayload;
-  const resData = []
+  const resData:Record<string,string|number>[] = []
   const { rows:jobs } = await db.query("select * from jobs where posted_by = $1;", [
     decoded.email,
   ]);
   await Promise.all(
     jobs.map(async job=>{
-      jobData.created_at = job.created_at;
-    jobData.posted_by = job.posted_by;
-    jobData.flag = job.flag;
+      const myJob:Record<string,string|number> = {}
+      myJob.id = job.id
+      myJob.created_at = job.created_at;
+    myJob.posted_by = job.posted_by;
+    myJob.flag = job.flag;
+    myJob.salary_range = job.salary_range;
     await Promise.all(
       languages.map(async (lang) => {
         const lng = lang[0].toUpperCase()+lang[1]
@@ -104,14 +107,14 @@ export async function GET(req: NextRequest) {
           `select * from jobTranslations where id = $1;`,
           [job[`${lang}jobid`]]
         )
-        jobData[titleKey] = rows[0].title
-          jobData[detailKey] = rows[0].detail
-          jobData[locationKey] = rows[0].location
-          jobData[catagoryKey] = rows[0].category
-          jobData[jobtypeKey] = rows[0].jobtype
+        myJob[titleKey] = rows[0].title
+          myJob[detailKey] = rows[0].detail
+          myJob[locationKey] = rows[0].location
+          myJob[catagoryKey] = rows[0].catagory
+          myJob[jobtypeKey] = rows[0].jobtype
       })
     )
-    resData.push(jobData)
+    resData.push(myJob)
     })
   )
   

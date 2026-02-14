@@ -1,6 +1,11 @@
 import { countriesType } from "../interfaces";
 //English content
 const english = {
+  edit: "Edit",
+  myJobs: "My Jobs",
+    createJob: "Create Job",
+    proposals: "Proposals",
+    create: "Create",
   donhave:"You don't have an account",
   createOne:"Create one",
   alreadySignedInMessage:"You are already signed in.",
@@ -412,6 +417,11 @@ const countriesEn:countriesType[]  = [
 ];
 //Arabic content
 const arabic = {
+   edit: "تعديل",
+  myJobs: "وظائفي",
+    createJob: "إنشاء وظيفة",
+    proposals: "المقترحات",
+    create: "إنشاء",
   alreadySignedInMessage:"أنت مسجل دخولك بالفعل",
   organizationName: "اسم المؤسسة",
   donhave: "ليس لديك حساب؟",
@@ -838,6 +848,11 @@ const countriesAr: countriesType[] = [
   { id: 249, name: "أبخازيا", flag: "https://flagcdn.com/w40/ge.png" },]
 //France content
 const french = {
+  edit: "Modifier",
+   myJobs: "Mes emplois",
+    createJob: "Créer un emploi",
+    proposals: "Propositions",
+    create: "Créer",
   alreadySignedInMessage:"Vous êtes déjà connecté.",
     organizationName: "Nom de l’organisation",
   donhave: "Vous n’avez pas de compte ?",
@@ -1266,6 +1281,11 @@ const countriesFr: countriesType[] = [
 ];
 //Amharic content
 const amharic = {
+  edit: "አርትዕ",
+  myJobs: "ስራዬ",
+    createJob: "ስራ ፍጠር",
+    proposals: "ጥያቄዎች",
+    create: "ፍጠር",
   alreadySignedInMessage:"አንተ ከዚህ ቀደም ተገብተሃል።",
   organizationName: "የድርጅት ስም",
   donhave: "አካውንት የለዎትም?",
@@ -1711,4 +1731,3 @@ export {countriesAr};
 export {countriesEn};
 export {countriesFr};
  
-

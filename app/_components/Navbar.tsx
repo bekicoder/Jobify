@@ -32,6 +32,7 @@ export default function NavBar() {
       const res = await fetch("/api/users/");
       const data = await res.json();
       if (data.message === "Unauthorized") return;
+     console.log(data,"this is the user data")
       setUser(data);
     };
     fetchData();
@@ -71,7 +72,7 @@ export default function NavBar() {
         <span className="font-medium">Jobify</span>
       </Link>
       <ul
-        className={`text-black flex p-2 pt-4 md:p-0 md:pr- bg-white md:bg-transparent gap-3 w-full h-screen md:h-fit items-start absolute top-full flex-col  transition-transform duration-300 font-medium ${hovered ? "translate-x-0" : "translate-x-full"} md:w-[80%] md:flex-row md:right-0 md:translate-x-0 md:top-0 md:gap-2 md:relative`}
+        className={`text-black flex p-2 pt-4 md:p-0  bg-white md:bg-transparent gap-3 w-full h-screen md:h-fit items-start absolute top-full flex-col  transition-transform duration-300 font-medium ${hovered ? "translate-x-0" : "translate-x-full"} md:w-[80%] md:flex-row md:right-0 md:translate-x-0 md:top-0 md:gap-2 md:relative `}
       >
         <Link
           href="/"
@@ -83,7 +84,7 @@ export default function NavBar() {
             <i className="fas fa-arrow-right ml-auto scale-0 group-hover:scale-100 transition overflow-hidden md:w-0 md: hidden"></i>
           </span>
         </Link>
-        <Link
+        {user?.role == "employee" && (<Link
           href="/jobs?route=appliedJobs"
           className="cursor-pointer w-full px-2 py-4 hover:bg-gray-100 transition duration-200 flex items-center hover:text-gray-900 group md:flex md:justify-center h-12"
         >
@@ -92,7 +93,8 @@ export default function NavBar() {
           <span className="md:hidden ml-auto">
             <i className="fas fa-arrow-right ml-auto scale-0 group-hover:scale-100 transition overflow-hidden md:w-0 md: hidden"></i>
           </span>
-        </Link>
+        </Link>)}
+        
         {user?.role == "employee" && (
           <Link
             href="/jobs?route=savedJobs"
@@ -106,15 +108,13 @@ export default function NavBar() {
           </Link>
         )}
         <div className="relative inline-block text-left" ref={dropdownRef}>
-      {/* Button to toggle dropdown */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="cursor-pointer w-full px-2 py-4 hover:bg-gray-100 transition duration-200  gap-2 flex items-center hover:text-gray-900 group md:flex md:justify-center h-12"
+        className="cursor-pointer w-full flex-1 px-2 py-4 hover:bg-gray-100 transition duration-200  gap-2 flex items-center hover:text-gray-900 group md:flex md:justify-center h-12"
       >
          {content.language}<i className="fa-solid fa-chevron-down mt-1"></i>
       </button>
 
-      {/* Dropdown list */}
       {isOpen && (
         <ul className="absolute mt-2 w-56 bg-white shadow-lg border rounded z-50 max-h-60 overflow-auto">
           {languages && languages.map((language:Language) => (

@@ -10,6 +10,7 @@ export async function GET(req:NextRequest) {
     const userData = jwt.verify(token,process.env.JWT_SECRET!);
     const decoded = userData as JwtPayload;
       const {id,...data} = decoded;
+      console.log(data)
     return NextResponse.json({...data});
   } catch(err){
     console.log(err)

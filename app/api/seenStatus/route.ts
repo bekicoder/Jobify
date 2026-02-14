@@ -6,7 +6,9 @@ export async function  POST(req:NextRequest) {
     if(!jobId){
             return NextResponse.json({ msg: "Job id is required"}, { status: 500 });
     }
-    const result = await db.query("update proposals set seenStatus = true where id=$1",[jobId])
+    
+    const result = await db.query("update proposals set seenstatus = true where id=$1",[jobId])
+    console.log(jobId,result)
     return NextResponse.json({msg:"successful"}, { status: 200 });
     }catch(err){
     console.log(err);

@@ -37,17 +37,27 @@ const JobDetailsPanel = ({
   setFd,
   setEdit,
 }: DetailsPanelType) => {
+  console.log(job);
   const [approval, setApproval] = useState<string>(job.approval);
   const [opend, setOpend] = useState<boolean>(false);
   const date = job.created_at.split(" ");
   const proposal = option === "proposal";
+  const { content, lang } = useSharedState();
   const handleEdit = () => {
     setFd({
       Jobtype: job.Jobtype,
       category: job.category,
-      range: job.salary_range,
-      detail: job.detail,
-      title: job.title,
+      title: job[`title${lang}`],
+      detail: job[`detail${lang}`],
+      salary_range: job.salary_range,
+      EnCategory: job.EnCategory,
+      FrCategory: job.FrCategory,
+      ArCategory: job.ArCategory,
+      AmCategory: job.AmCategory,
+      EnJobType: job.EnJobtype,
+      FrJobType: job.FrJobtype,
+      ArJobType: job.ArJobtype,
+      AmJobType: job.AmJobtype,
     });
     setPage("createJob");
     setJobdetail(null);
@@ -56,7 +66,7 @@ const JobDetailsPanel = ({
   async function handleApproval(status: boolean) {
     const res = await fetch("/api/approval", {
       method: "POST",
-      body: JSON.stringify({ status: status, jobId: job.id }),
+      body: JSON.stringify({ status: status, jobId: job.propId }),
       headers: { "Content-Type": "application/json" },
     });
     const approval_res = await res.json();
@@ -75,9 +85,9 @@ const JobDetailsPanel = ({
           <div className="w-full p-4 h-full bg-white rounded-2xl max-w-2xl flex flex-col relative">
             <h1 className="text-2xl font-bold text-center mb-1">
               Write Proposal
-            </h1>{" "}
+            </h1>
             <p className="text-center text-sm text-gray-600 mb-4">
-              Markdown formatting supported
+              {content.markdownSupport}
             </p>
             <button
               onClick={() => setOpend(false)}
@@ -90,7 +100,7 @@ const JobDetailsPanel = ({
               className="w-full border rounded-xl resize-none p-4 max-h-full flex-1 focus:border-0 focus-outline-0.5 outline-sky-500"
             ></textarea>
             <button className="px-6 py-2 rounded-full bg-sky-600 hover:bg-[#0a2540] text-white font-medium cursor-pointer flex-none w-fit my-4 mx-auto">
-              Send
+              {content.send}
             </button>
           </div>
         </div>
@@ -143,27 +153,27 @@ const JobDetailsPanel = ({
       <div className="w-full flex justify-between pr-4">
         <span className=" text-sm flex items-center font-medium text-gray-600">
           {proposal ? job.name : job.salary_range} • {job.location}
-          &nbsp;&nbsp;&nbsp;{" "}
+          &nbsp;&nbsp;&nbsp;
           <Image
             width={20}
             height={20}
             src={job.flag}
             alt={job.name + " flag"}
             className="h-fit aspect-video"
-          />{" "}
-          &nbsp;&nbsp;{!proposal && " • " + job.Jobtype}
+          />
+          &nbsp;&nbsp;{!proposal && " • " + job[`${lang}Jobtype`]}
         </span>
         <span className="text-sm">
-          <i className="fa-solid fa-calendar-day text-gray-500" />{" "}
-          {date[0].replaceAll("-", "/")}{" "}
+          <i className="fa-solid fa-calendar-day text-gray-500" />
+          {date[0].replaceAll("-", "/")}
         </span>
       </div>
       {proposal && <p className="text-sm  mt-1">{job.sender}</p>}
       <h3 className="text-xl font-medium mt-8 mb-1 text-slate-800">
-        About the Job
+        {content.aboutJob}
       </h3>
       <article className="prose lg:prose-l prose-slate max-h-full flex-1 mb-16">
-        <ReactMarkdown>{job.detail}</ReactMarkdown>
+        <ReactMarkdown>{job[`detail${lang}`]}</ReactMarkdown>
         <div className="w-full h-12"></div>
       </article>
     </div>
@@ -182,8 +192,7 @@ const CreateJobs = ({
 
   const { jobTypes } = useSharedState();
   const { jobCategories } = useSharedState();
-  const { lang } = useSharedState();
-  const { content } = useSharedState();
+  const { content,lang } = useSharedState();
   const [selectedJt, setSelectedJt] = useState("");
   const incomeRanges: income_range[] = [
     { id: 1, label: `${content.below} $500` },
@@ -207,18 +216,40 @@ const CreateJobs = ({
       setOpenedMenu(menu);
     }
   }
+  let disabled = false ;
   async function handleSumit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if(!disabled){
     const res = await fetch("/api/createJob", {
-      body: JSON.stringify({ data: fd, editId: edit }),
+      body: JSON.stringify({ fd: fd, editId: edit }),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
     });
     const data = await res.json();
     const data_res = data.data;
-    console.log(data)
+    if(data_res.status == "successful"){
+      
+      setFd({
+    title: "",
+    detail: "",
+    salary_range: "",
+    EnCategory: "",
+    FrCategory: "",
+    ArCategory: "",
+    AmCategory: "",
+    EnJobType: "",
+    FrJobType: "",
+    ArJobType: "",
+    AmJobType: "",
+  })
+  // eslint-disable-next-line react-hooks/immutability
+  disabled = !disabled
+    }
+    console.log(data);
+}
   }
+
   function handleChange(id: number, option: string) {
     const languages = ["En", "Am", "Fr", "Ar"];
 
@@ -265,9 +296,11 @@ const CreateJobs = ({
       onSubmit={handleSumit}
       className="w-full px-4 pt-4 h-full bg-white md:rounded-2xl flex flex-col"
     >
-      <h1 className="text-2xl font-bold text-center mb-1">Write Job Detail</h1>{" "}
+      <h1 className="text-2xl font-bold text-center mb-1">
+        {content.writeProposal}
+      </h1>
       <p className="text-center text-sm text-gray-600 mb-4">
-        Markdown formatting supported
+        {content.markdownSupport}
       </p>
       <div className="flex w-full flex-col gap-3 mb-4 font-medium text-gray-700 md:flex-row md:justify-between">
         {/* job type */}
@@ -278,7 +311,7 @@ const CreateJobs = ({
           className="p-2 tabin relative rounded-lg bg-gray-100 flex items-center cursor-pointer flex-1"
         >
           <i className="fa-solid fa-briefcase mr-2 text-gray-500" />
-          Job type{" "}
+          {content.jobType}&nbsp;
           <i className="fa-solid fa-chevron-down mr-3 text-gray-500 ml-auto"></i>
           <input
             name="Job_type"
@@ -318,10 +351,11 @@ const CreateJobs = ({
           tabIndex={0}
           className="p-2 relative rounded-lg bg-gray-100 flex items-center cursor-pointer flex-1"
         >
-          <i className="fas fa-layer-group mr-2 text-gray-500"></i>Cataory{" "}
+          <i className="fas fa-layer-group mr-2 text-gray-500"></i>
+          {content.categories}
           <i className="fa-solid fa-chevron-down mr-3 text-gray-500 ml-auto"></i>
           <input
-            name="category"
+            name={content.categories}
             value={fd.category}
             className="sr-only"
             readOnly
@@ -358,7 +392,8 @@ const CreateJobs = ({
           tabIndex={0}
           className="p-2 relative rounded-lg bg-gray-100 flex items-center cursor-pointer flex-1"
         >
-          <i className="fas fa-sack-dollar mr-2 text-gray-500"></i>Sallary Range{" "}
+          <i className="fas fa-sack-dollar mr-2 text-gray-500"></i>
+          {content.salary}
           <i className="fa-solid fa-chevron-down mr-3 text-gray-500 ml-auto"></i>
           <input
             name="range"
@@ -396,7 +431,7 @@ const CreateJobs = ({
         onChange={(e) => setFd((prev) => ({ ...prev, title: e.target.value }))}
         value={fd.title}
         name="title"
-        placeholder="Title"
+        placeholder={content.title}
         className="w-full p-2 px-4 rounded-lg border mb-3"
         required
       />
@@ -404,7 +439,7 @@ const CreateJobs = ({
         onChange={(e) => setFd((prev) => ({ ...prev, detail: e.target.value }))}
         name="detail"
         value={fd.detail}
-        placeholder="Enter proposal details..."
+        placeholder={content.proposalPlaceholder}
         className="w-full border rounded-xl resize-none p-4 max-h-full flex-1 focus:border-0 focus-outline-0.5 outline-sky-500"
         required
       ></textarea>
@@ -412,7 +447,7 @@ const CreateJobs = ({
         type="submit"
         className="px-6 py-2 rounded-full bg-sky-600 hover:bg-[#0a2540] text-white font-medium cursor-pointer flex-none w-fit my-4 mx-auto"
       >
-        {!edit ? "Create" : "Edit"}
+        {!edit ? content.create : content.edit}
       </button>
     </form>
   );
@@ -420,13 +455,13 @@ const CreateJobs = ({
 
 const Employer = () => {
   const [selectedJob, setJobdetail] = useState<number | null>(0);
-
   const [page, setPage] = useState<string | null>("proposals");
   const [jobs, setJobs] = useState<_jobs[]>([]);
   const [myJobs, setMyjobs] = useState<_myjobsType[]>([]);
   const [edit, setEdit] = useState<number | null>(null);
   const [proposals, setProposals] = useState([]);
   const [proposal_ids, setProposal_ids] = useState([]);
+  const { content, lang } = useSharedState();
   const [fd, setFd] = useState({
     title: "",
     detail: "",
@@ -444,47 +479,54 @@ const Employer = () => {
   useEffect(() => {
     const fetchData = async () => {
       const job_res = await fetch("/api/myJobs");
-      const _Myjobs = await job_res.json();
+      const { resData } = await job_res.json();
+      setMyjobs(resData);
       //fetch proposals
       const prop_res = await fetch("/api/proposal/?role=employer", {
         cache: "no-store",
       });
       const props = await prop_res.json();
+      if (props.data.legth == 0) return;
+
       const fullProposal = props.data.map(
-        (p: {
-          id: number;
-          name: string;
-          approval: string;
-          career_id: string;
-          career_owner: string;
-          created_at: string;
-          proposal: string;
-          seenstatus: string;
-          sender: string;
-          sender_flag: string;
-          sender_location: string;
-          title: string;
-        }) => {
-          const proposed_job = _Myjobs.data.filter((j: proposalType) => {
-            return j.id == Number(p.career_id);
-          });
+        (p: Record<string, string | number>) => {
+          const proposed_job = resData.filter(
+            (j: Record<string, string | number>) => {
+              return j.id == Number(p.career_id);
+            },
+          );
+
+          console.log(proposed_job,"hi beki this is the porposed job")
           return {
-            id: p.id,
-            career_owner: p.career_owner,
-            created_at: p.created_at,
-            name: p.name,
-            detail: p.proposal,
-            sender: p.sender,
-            location: p.sender_location,
-            flag: p.sender_flag,
-            title: proposed_job[0].title,
-            approval: p.approval,
-            seenStatus: p.seenstatus,
-          };
+          id: Number(p.career_id),
+          career_owner: p.career_owner,
+          created_at: p.created_at,
+          name: p.name,
+          detailAm: p?.amproposal,
+          detailAr:p?.arproposal,
+          detailFr:p?.frproposal,
+          detailEn:p?.enproposal,
+          sender: p.sender,
+          senderlocen: p?.senderlocen,
+          senderlocam: p?.senderlocam,
+          senderlocar: p?.senderlocar,
+          senderlocfr: p?.senderlocfr,
+          AmJobtype:proposed_job[0]?.AmJobtype,
+          ArJobtype:proposed_job[0]?.ArJobtype,
+          EnJobtype:proposed_job[0]?.EnJobtype,
+          FrJobtype:proposed_job[0]?.FrJobtype,
+          flag: proposed_job[0]?.flag,
+          titleam: proposed_job[0]?.titleAm,
+          titleen: proposed_job[0]?.titleEn,
+          titlefr: proposed_job[0]?.titleFr,
+          titlear: proposed_job[0]?.titleAr,
+          approval: p.approval,
+          seenstatus: p.seenstatus,
+          propId:p.id
+        };
         },
       );
       setProposals(fullProposal);
-      setMyjobs(_Myjobs.data);
     };
 
     /* const fetchProposals = async()=>{
@@ -501,13 +543,14 @@ const Employer = () => {
   }, []);
 
   async function handleSeen(jobid_: number, status: proposalType) {
-    if (!status) {
+    if (!status.seenstatus) {
       const seenRes = await fetch("/api/seenStatus", {
         method: "POST",
         body: JSON.stringify({ jobId: jobid_ }),
         headers: { "Content-Type": "application/json" },
       });
       const { msg } = await seenRes.json();
+      console.log(msg,"this is the msg")
       if (msg !== "successful") {
       }
     }
@@ -516,8 +559,7 @@ const Employer = () => {
     <div className="w-full md:h-full pt-16 flex flex-col md:flex-row overflow-auto bg-[#f6f9fc] md:fixed">
       <aside className="w-full h-full md:w-70 shadow-r-lg flex gap-5 flex-col md:rounded pb-12 bg-white ">
         <h1 className="w-full py-3 h-fit bg-sky-600 text-white text-2xl text-center font-bold md:rounded-t">
-          {" "}
-          Land Your Job
+          {content.headline}
         </h1>
         <div className="px-3 flex gap-5 flex-col text-gray-700">
           <div
@@ -525,21 +567,21 @@ const Employer = () => {
             className="relative flex rounded-xl font-medium item-center px-2 hover:bg-green-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2"
           >
             <i className="fa-solid fa-clipboard-list"></i>
-            My Jobs
+            {content.myJobs}
           </div>
           <div
             onClick={() => setPage("createJob")}
             className="relative flex rounded-xl font-medium item-center px-2 hover:bg-yellow-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2"
           >
             <i className="fa-solid fa-file-circle-plus"></i>
-            Create Job
+            {content.createJob}
           </div>
           <div
             onClick={() => setPage("proposals")}
             className="relative flex rounded-xl font-medium item-center px-2 hover:bg-yellow-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2"
           >
             <i className="fa-solid fa-file-lines"></i>
-            Proposals
+          {content.proposals}
           </div>
         </div>
       </aside>
@@ -575,13 +617,13 @@ const Employer = () => {
                   <thead className="border-b border-b-gray-300 px-7">
                     <tr>
                       <th className="text-left text-sm font-medium px-4 py-2">
-                        Careers
+                        {content.careers}
                       </th>
                       <th className="text-left text-sm font-medium px-4 py-2">
-                        Location
+                        {content.location}
                       </th>
                       <th className="text-left text-sm font-medium px-4 py-2">
-                        Job Type
+                        {content.jobType}
                       </th>
                     </tr>
                   </thead>
@@ -595,7 +637,7 @@ const Employer = () => {
                         className="even:bg-gray-50 hover:bg-gray-100 cursor-pointer"
                       >
                         <td className="text-left text-sm px-4 py-2 text-indigo-500 font-medium">
-                          {p.title}
+                          {p[`title${lang}`]}
                         </td>
                         <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
                           {
@@ -606,11 +648,11 @@ const Employer = () => {
                               alt={p.location + " flag"}
                               className="h-fit aspect-video"
                             />
-                          }{" "}
-                          {p.location}
+                          }
+                          {p[`${lang}Location`]}
                         </td>
                         <td className="text-left text-sm px-4 py-1">
-                          {p.jobtype}
+                          {p[`${lang}Jobtype`]}
                         </td>
                       </tr>
                     ))}
@@ -636,15 +678,15 @@ const Employer = () => {
               <>
                 <table className="w-full shadow-2xl rounded-2xl bg-white px-7 overflow-hidden">
                   <thead className="border-b border-b-gray-300 px-7">
-                    <tr>
+                    <tr>{console.log(proposals,"dose this work")}
                       <th className="text-left text-sm font-medium px-4 py-2">
-                        Name
+                        {content.name}
                       </th>
                       <th className="text-left text-sm font-medium px-4 py-2">
-                        Location
+                        {content.location}
                       </th>
                       <th className="text-left text-sm font-medium px-4 py-2">
-                        Career
+                        {content.careers}
                       </th>
                     </tr>
                   </thead>
@@ -653,7 +695,7 @@ const Employer = () => {
                       <tr
                         onClick={() => {
                           setJobdetail(i + 1);
-                          handleSeen(p.id, p);
+                          handleSeen(p.propId, p);
                         }}
                         key={i}
                         className="even:bg-gray-50 hover:bg-gray-100 cursor-pointer"
@@ -667,14 +709,14 @@ const Employer = () => {
                               width={20}
                               height={20}
                               src={p.flag}
-                              alt={p.location + " flag"}
+                              alt={p[`senderloc${lang.toLowerCase()}`] + " flag"}
                               className="h-fit aspect-video"
                             />
                           }
-                          {p.location}
+                          {p[`senderloc${lang.toLowerCase()}`]}
                         </td>
                         <td className="text-left text-sm px-4 py-1">
-                          {p.title}
+                          {p[`title${lang.toLowerCase()}`]}
                         </td>
                       </tr>
                     ))}

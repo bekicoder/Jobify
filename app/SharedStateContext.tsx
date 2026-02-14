@@ -9,7 +9,7 @@ import {
   use,
 } from "react";
 import amharic, { english, french, arabic,categoriesAm,categoriesAr,categoriesEn,categoriesFr,jobTypesAm,jobTypesAr,jobTypesEn,jobTypesFr,teamsAm,teamsAr,teamsEn,teamsFr,countriesAm,countriesEn,countriesFr,countriesAr } from "./_components/contents";
-import { countriesType } from "./interfaces";
+import ContentType, { countriesType } from "./interfaces";
 // Define all states you want to share
 type job_types = {
     id: number;
@@ -32,8 +32,8 @@ type job_types = {
 type SharedStateType = {
   lang: string;
   setLang: (val: string) => void;
-  content: Record<string,string>;
-  setContent: (val: Record<string,string>) => void;
+  content: ContentType;
+  setContent: (val: ContentType) => void;
   jobTypes:job_types[];
   jobCategories:JobCategory[];
   teams:teamsType[];
@@ -47,7 +47,7 @@ const SharedStateContext = createContext<SharedStateType | undefined>(
 
 export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLang] = useState("En");
-  const [content, setContent] = useState<Record<string,string>>(english);
+  const [content, setContent] = useState<ContentType>(english);
   const [jobTypes,setJobTypes] = useState<job_types[]>(jobTypesEn)
   const [jobCategories,setCatagories] = useState<JobCategory[]>(categoriesEn)
   const [teams,setTeam] = useState<teamsType[]>(teamsEn)

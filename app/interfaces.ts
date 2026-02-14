@@ -1,5 +1,10 @@
 import { SetStateAction } from "react";
 export default interface ContentType {
+  myJobs: string;
+    createJob: string;
+    proposals: string;
+    create: string;
+    edit: string
   alreadySignedInMessage:string;
   organizationName:string;
   password: string;
@@ -109,7 +114,10 @@ export interface DetailsPanelType {
   setPage: React.Dispatch<SetStateAction<string | null>>;
   setFd: React.Dispatch<SetStateAction<_Fd>>;
   setEdit: React.Dispatch<SetStateAction<number | null>>;
-}
+  setApprovals:React.Dispatch<SetStateAction<Record<string,string|number>[]>>
+  approvals:Record<string,string|number>[]
+}  
+
 export interface _jobs {
   id: number;
   title: string;
@@ -138,11 +146,9 @@ export interface proposalType {
   career_id: string;
   career_owner: string;
   created_at: string;
-  detail: string;
   seenstatus: string;
   sender: string;
   flag: string;
-  location: string;
   title: string;
 }
 

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { proposalType } from "../interfaces"; 
 import { job_detailsPanel,jobType } from "../interfaces";
 import { useSharedState } from "../SharedStateContext";
+import { stringify } from "querystring";
 const JobDetailsPanel = ({
   proposal_ids,
   job,
@@ -15,79 +16,69 @@ const JobDetailsPanel = ({
   saved_ids,
   setSaved_ids,
   setSavedJobs,
+  approvals,
+  setApprovals
 }:job_detailsPanel) => {
+  console.log(job,"this is the job")
   const [opend, setOpend] = useState<boolean>(false);
   const {lang} = useSharedState()
 const {content} = useSharedState()
-  const date = job.created_at.split("T");
-  const [isSaved, setSaved] = useState<boolean>(false);
+  const date = job.created_at.split(" ");
+  const isSaved = saved_ids.some((s) => s == job.id);
   const proposal = proposals.find((p) => {
     return p.id == job.id;
   });
-      console.log(job,proposal,"this is the job",job.id,saved_ids,saved_ids.some((s) => s == job.id))
-    const [approved, setApproved] = useState<string | undefined>(undefined);
-    const [isApplied,setApplied] = useState<boolean>(false);
+    const approval = approvals.find(a=>a.id == job.id)
+    const approved = approval?.approval
+    console.log(approval?.approval,"this is the approved",approvals,approval)
+    const isApplied = proposal_ids.some(p=>Number(p) == Number(job.id))
+    console.log(isApplied)
   const handleSave = async () => {
-    console.log("dose this saved")
-
+    setOpend(false)
     const save = await fetch("/api/saveJob", {
       method: "POST",
+      cache:"no-store",
       body: JSON.stringify({ jobId: job.id, saved: isSaved }),
       headers: { "Content-Type": "application/json" },
-    });
+    })
     const { msg, id: savedId, savedJob } = await save.json();
-
+    alert(msg)
     if (msg == "successful") {
       setSaved_ids((prev) =>
-        isSaved ? prev.filter((id) => id != job.id) : [savedId, ...prev],
-      );
+        isSaved ? prev.filter((id) => id != job.id) : [Number(savedId), ...prev],
+      )
       setSavedJobs((prev) =>
         isSaved ? prev.filter((p) => p.id != job.id) : [savedJob, ...prev],
-      );
-      setSaved(!isSaved);
+      )
     }
   };
-  useEffect(()=>{
-    const saved = saved_ids.some((s) => s == job.id)
-    const appliedId = proposal_ids.some((p) => {
-    return p == job.id;
-  });
-  console.log(appliedId,"I am the owner of this",proposal?.approval)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setApproved(proposal?.approval)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if(saved)setSaved(true)
-    setApplied(appliedId)
-  },[job,proposal_ids,saved_ids,proposals])
+
+   
   
   function handleClose(){
     setJobdetail(null);
-    setApplied(false)
-    setApproved(undefined)
-    setSaved(false)
   }
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const target = e.target as HTMLFormElement
     const fd = new FormData(target);
     const data = Object.fromEntries(fd.entries())
-     console.log(data,"This is the proposal data")
     const article = fd.get("article");
     const res = await fetch("/api/proposal", {
       method: "POST",
+      cache:"no-store",
       body: JSON.stringify(data),
       headers: { "Content-Type": "application" },
-      cache: "no-store",
     });
     const _res = await res.json();
     if (_res.msg === "successful") {
       target.reset();
       setOpend(false);
-      const data = await fetch(`/api/proposal?id=${_res.id}`);
+      const data = await fetch(`/api/proposal?id=${_res.id}`,{cache:"no-store"});
       const updatedData = await data.json();
       setProposal_ids((prev) => [_res.id, ...prev]);
-      setApplied(_res.id);
-      setApproved(updatedData.data.approval);
+      setApprovals({id:job.id,approval:updatedData.data.approval});
+      
     }
   }
   return (
@@ -195,7 +186,7 @@ const {content} = useSharedState()
           </div>
           &nbsp;&nbsp;• {job[`${lang}Jobtype`]} &nbsp;&nbsp;
           <span
-            className={`w-2 h-2 rounded-full block ${!proposal?.seenstatus && approved ? "bg-yellow-600" : approved && "bg-green-500"} my-auto mt-2 `}
+            className={`w-2 h-2 rounded-full block ${!proposal?.seenstatus && approved ? "bg-yellow-500" : approved && "bg-green-500"} my-auto mt-2 `}
           ></span>
         </span>
         <span className="text-sm">
@@ -218,48 +209,47 @@ const {content} = useSharedState()
 const EmployeePage = () => {
   const searchParams = useSearchParams();
   const route = searchParams.get("route");
-  const {content} = useSharedState()
+  const {content,jobCategories,jobTypes,countries} = useSharedState()
   const [_jobs, setJobs] = useState<jobType[]>([]);
 
-  type JobCategory = {
-    id: number;
-    title: string;
-  };
-  const {jobCategories}=useSharedState()
+  // type JobCategory = {
+  //   id: number;
+  //   title: string;
+  // };
 
-  type locations = {
-    id: number;
-    name: string;
-    flag: string;
-  };
-  const {countries} = useSharedState()
+  // type locations = {
+  //   id: number;
+  //   name: string;
+  //   flag: string;
+  // };
+  // const {} = useSharedState()
 
-  type job_types = {
-    id: number;
-    name: string;
-  };
+  // type job_types = {
+  //   id: number;
+  //   name: string;
+  // };
 
-  const jobTypes: job_types[] = [
-    { id: 1, name: "Full-time" },
-    { id: 2, name: "Part-time" },
-    { id: 3, name: "Contract" },
-    { id: 4, name: "Temporary" },
-    { id: 5, name: "Internship" },
-    { id: 6, name: "Freelance" },
-    { id: 7, name: "Remote" },
-    { id: 8, name: "Hybrid" },
-    { id: 9, name: "On-site" },
-    { id: 10, name: "Seasonal" },
-    { id: 11, name: "Volunteer" },
-    { id: 12, name: "Apprenticeship" },
-  ];
+  // const jobTypes: job_types[] = [
+  //   { id: 1, name: "Full-time" },
+  //   { id: 2, name: "Part-time" },
+  //   { id: 3, name: "Contract" },
+  //   { id: 4, name: "Temporary" },
+  //   { id: 5, name: "Internship" },
+  //   { id: 6, name: "Freelance" },
+  //   { id: 7, name: "Remote" },
+  //   { id: 8, name: "Hybrid" },
+  //   { id: 9, name: "On-site" },
+  //   { id: 10, name: "Seasonal" },
+  //   { id: 11, name: "Volunteer" },
+  //   { id: 12, name: "Apprenticeship" },
+  // ];
 
   type income_range = {
     id: number;
     label: string;
   };
   const incomeRanges: income_range[] = [
-    { id: 1, label: "Below $500" },
+    { id: 1, label: `${content.below} $500` },
     { id: 2, label: "$500 – $1,000" },
     { id: 3, label: "$1,000 – $2,000" },
     { id: 4, label: "$2,000 – $3,000" },
@@ -283,7 +273,8 @@ const EmployeePage = () => {
   const [filteredJobs, setFilteredJobs] = useState<jobType[]>([]);
   const [saved_ids, setSaved_ids] = useState<number[]>([]);
   const {lang} = useSharedState()
-  const [selectedJ,setSelectedJ] =useState({
+  const [approvals,setApprovals] = useState<Record<string,string|number>[]>([])
+  const [selectedJ,setSelectedJ] = useState({
     id: 0,
     catagory: "",
     created_at: "",
@@ -316,7 +307,7 @@ const EmployeePage = () => {
 
   useEffect(() => {
     const fethJobs = async () => {
-      const jobCount = await fetch("/api/jobs");
+      const jobCount = await fetch("/api/jobs",{cache:"no-store"});
       const { count } = await jobCount.json();
       const jobs_: jobType[] = [];
       for (let i = 1; i <= count; i++) {
@@ -325,47 +316,59 @@ const EmployeePage = () => {
           body: JSON.stringify({ id: i }), 
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
-        });
+        })
         const job = await res.json();
-        console.log(job)
         jobs_.unshift(job.jobData);
       }
       setJobs(jobs_);
       const prop_res = await fetch("/api/proposal/?role=employee", {
         cache: "no-store",
       })
-
       const props = await prop_res.json();
       const proposalIds: number[] = [];
-      const fullProposal = props.data.map((p:proposalType) => {
+      const approved:Record<string,string | number>[] = []
+      const fullProposal = props.data.map((p: Record<string, string | number>) => {
+        approved.unshift({id:Number(p.career_id),approval:String(p.approval)})
         proposalIds.unshift(Number(p.career_id));
         const career = jobs_.find((j) => j.id == Number(p.career_id));
         return {
-          id: p.career_id,
+          id: Number(p.career_id),
           career_owner: p.career_owner,
           created_at: p.created_at,
           name: p.name,
-          detail: p.detail,
+          seenstatus:p.seenstatus,
+          approval:p.approval,
+          detailAm: p?.amproposal,
+          detailAr:p?.arproposal,
+          detailFr:p?.frproposal,
+          detailEn:p?.enproposal,
           sender: p.sender,
-          location: career?.location,
+          senderlocen: p?.senderlocen,
+          senderlocam: p?.senderlocam,
+          senderlocar: p?.senderlocar,
+          senderlocfr: p?.senderlocfr,
+          AmJobtype:career?.AmJobtype,
+          ArJobtype:career?.ArJobtype,
+          EnJobtype:career?.EnJobtype,
+          FrJobtype:career?.FrJobtype,
           flag: career?.flag,
-          title: career?.title,
-          approval: p.approval,
-          seenStatus: p.seenstatus,
+          titleam: career?.titleAm,
+          titleen: career?.titleEn,
+          titlefr: career?.titleFr,
+          titlear: career?.titleAr,
+          salary_range:career?.salary_range
         };
       });
-
+      console.log(approved,"this is approved hi beki are you fine")
       setProposal_ids(proposalIds);
       setProposals(fullProposal);
+      setApprovals(approved)
     };
-
     const fetchSaved = async () => {
-      const savedRes = await fetch("/api/saveJob");
+      const savedRes = await fetch("/api/saveJob",{cache:"no-store"});
       const { data } = await savedRes.json();
-      console.log(data,"dose this work")
       if(!data)return;
       data.forEach((d:Record<string,string | number>) => {
-        console.log(d.id,"check for reality")
         setSaved_ids((prev) => [...prev, Number(d.id)]);
       });
       setSavedJobs(data);
@@ -375,7 +378,6 @@ const EmployeePage = () => {
   },[]);
   function handleFilter(filterType: string, option: string, status: boolean) {
     if (!option || !filterType) return;
-
     setFilteredJobs((prev) => {
       if (status) {
         // ADD filter
@@ -390,17 +392,22 @@ const EmployeePage = () => {
       }
     });
   }
+  function handleSearch(e){
 
+  }
   const jobsToRender = filteredJobs.length > 0 ? filteredJobs : _jobs;
+
   useEffect(()=>{
-    const selected =_jobs.find((j) => {
-                  return j.id == selectedJob;
-                })
+    let selected ;
+    if(route == "appliedJobs"){
+      selected = proposals.find((j) => j.id == selectedJob)
+    } 
+    else {
+      selected = _jobs.find((j) => j.id == selectedJob)
+    }
        // eslint-disable-next-line react-hooks/set-state-in-effect
        if(selected) setSelectedJ(selected)
   },[selectedJob])
-
-  
   return (
     <div className="w-full md:h-full pt-16 flex flex-col md:flex-row overflow-auto bg-[#f6f9fc] md:fixed">
       <aside
@@ -455,7 +462,7 @@ const EmployeePage = () => {
               </div>
             )}
           </div>
-
+          {/* location filter*/}
           <div className="relative flex rounded-xl item-center px-2 hover:bg-yellow-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2">
             <i className="fa-solid fa-map-marker-alt text-gray-500" />
             {content.location}
@@ -477,7 +484,7 @@ const EmployeePage = () => {
                     <input
                       onChange={(e) => {
                         toggleCheckbox("catagory", c.id);
-                        handleFilter("location", c.name, e.target.checked);
+                        handleFilter(`${lang}Location`, c.name, e.target.checked);
                       }}
                       type="checkbox"
                       value={c.name}
@@ -499,7 +506,7 @@ const EmployeePage = () => {
               </div>
             )}
           </div>
-
+          {/*job type filter */}
           <div className="relative cursor-pointer flex rounded-xl item-center px-2 hover:bg-red-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2">
             <i className="fa-solid fa-briefcase text-gray-500" />
             {content.jobType}
@@ -521,7 +528,7 @@ const EmployeePage = () => {
                     <input
                       onChange={(e) => {
                         toggleCheckbox("catagory", t.id);
-                        handleFilter("jobtype", t.name, e.target.checked);
+                        handleFilter(`${lang}Jobtype`, t.name, e.target.checked);
                       }}
                       type="checkbox"
                       value={t.name}
@@ -536,7 +543,7 @@ const EmployeePage = () => {
               </div>
             )}
           </div>
-
+          {/*salary filter */}
           <div className="relative cursor-pointer flex rounded-xl item-center px-2 hover:bg-cyan-100 bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2">
             <i className="fa-solid fa-dollar text-gray-500" />
             {content.salary}
@@ -558,7 +565,7 @@ const EmployeePage = () => {
                     <input
                       onChange={(e) => {
                         toggleCheckbox("catagory", range.id);
-                        handleFilter("jobtype", range.label, e.target.checked);
+                        handleFilter("salary_range", range.label, e.target.checked);
                       }}
                       type="checkbox"
                       value={range.label}
@@ -588,6 +595,8 @@ const EmployeePage = () => {
               proposal_ids={proposal_ids}
               job={selectedJ} 
               setJobdetail={setJobdetail}
+              approvals={approvals}
+              setApprovals={setApprovals}
             />
           ) : (
             <>
@@ -641,6 +650,35 @@ const EmployeePage = () => {
                     ))}
 
                   {route == "appliedJobs" &&
+                    proposals.map((p, i) => (
+                      <tr
+                        onClick={() => setJobdetail(p.id)}
+                        key={i}
+                        className="even:bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                      >
+                        <td className="text-left text-sm px-4 py-2 text-indigo-500 font-medium">
+                          {p[`title${lang.toLowerCase()}`]}
+                        </td>
+                        <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
+                          <div className="aspect-video w-5 relative">
+                            {
+                              <Image
+                                src={p.flag}
+                                alt={p.location + " flag"}
+                                fill
+                                sizes="20px"
+                                className="object-contain"
+                              />
+                            }
+                          </div>{" "}
+                          {p[`senderloc${lang.toLowerCase()}`]}
+                        </td>
+                        <td className="text-left text-sm px-4 py-1">
+                          {p[`${lang}Jobtype`]}
+                        </td>
+                      </tr>
+                    ))}
+                  {route == "savedJobs" &&
                     savedJobs.map((p, i) => (
                       <tr
                         onClick={() => setJobdetail(p.id)}
@@ -661,40 +699,11 @@ const EmployeePage = () => {
                                 className="object-contain"
                               />
                             }
-                          </div>{" "}
+                          </div>
                           {p[`${lang}Location`]}
                         </td>
                         <td className="text-left text-sm px-4 py-1">
                           {p[`${lang}Jobtype`]}
-                        </td>
-                      </tr>
-                    ))}
-                  {route == "savedJobs" &&
-                    savedJobs.map((p, i) => (
-                      <tr
-                        onClick={() => setJobdetail(p.id)}
-                        key={i}
-                        className="even:bg-gray-50 hover:bg-gray-100 cursor-pointer"
-                      >
-                        <td className="text-left text-sm px-4 py-2 text-indigo-500 font-medium">
-                          {p.title}
-                        </td>
-                        <td className="text-left text-sm px-4 py-2 flex items-center gap-2">
-                          <div className="aspect-video w-5 relative">
-                            {
-                              <Image
-                                src={p.flag}
-                                alt={p.location + " flag"}
-                                fill
-                                sizes="20px"
-                                className="object-contain"
-                              />
-                            }
-                          </div>
-                          {p.location}
-                        </td>
-                        <td className="text-left text-sm px-4 py-1">
-                          {p.jobtype}
                         </td>
                       </tr>
                     ))}

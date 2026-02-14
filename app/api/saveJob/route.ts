@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { pool as db } from "@/lib/db";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { jobData,jobDataType } from "../myJobs/route";
+import { jobDataType } from "../myJobs/route";
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("jobify-token")?.value;
@@ -11,13 +11,14 @@ export async function GET(req: NextRequest) {
     const data = jwt.verify(token, process.env.JWT_SECRET!);
     const decoded = data as JwtPayload;
       const languages = ["en", "am", "ar", "fr"];
-      const savedJobsRes:jobDataType[] = []
+      const savedJobsRes:Record<string,number|string>[] = []
     const { rows } = await db.query(
       "select * from savedJobs where user_id = $1 order by id desc",
       [decoded.id],
     );
     const savedJobs = await Promise.all(
       rows.map(async (sj) => {
+        const jobData:Record<string,number|string> = {}
         const { rows: job } = await db.query(
           "select * from jobs where id = $1;",
           [sj.career_id],
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
             const detailKey = `detail${lng}`;
             const locationKey = `${lng}Location`;
             const jobtypeKey = `${lng}Jobtype`;
-            const catagoryKey = `${lng}Category`;
+            const catagoryKey = `${lng}Catagory`;
             const { rows } = await db.query(
               `select * from jobTranslations where id = $1;`,
               [job[0][`${lang}jobid`]],
@@ -42,11 +43,12 @@ export async function GET(req: NextRequest) {
             jobData[titleKey] = rows[0].title;
             jobData[detailKey] = rows[0].detail;
             jobData[locationKey] = rows[0].location;
-            jobData[catagoryKey] = rows[0].category;
+            jobData[catagoryKey] = rows[0].catagory;
             jobData[jobtypeKey] = rows[0].jobtype;
           }),
         );
         savedJobsRes.push(jobData)
+        console.log("this is before the savedres",savedJobsRes,sj.career_id,jobData,"this is the job data ")
       }),
     );
     return NextResponse.json({ data: savedJobsRes }, { status: 200 });
@@ -59,6 +61,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { jobId: id, saved } = await req.json();
+    console.log(saved)
     const token = req.cookies.get("jobify-token")?.value;
     if (!id) {
       return NextResponse.json({ msg: `id is required` }, { status: 401 });

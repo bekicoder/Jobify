@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
     };
     const proposalData: Record<string, string> = {};
     const detectedLang = franc(article);
+    console.log(detectedLang,"this is the lang")
     const lang = isoMap[detectedLang] || "En";
     const locationId = countriesEn.filter((c)=>c.name == proposal.location)
     const countriesMap:Record<string,{id:number,name:string}[]> = {
@@ -70,19 +71,17 @@ export async function POST(req: NextRequest) {
         })
         proposalData[`senderloc${lng.toLowerCase()}`] = countrie[0].name
     })
-    
     //     return NextResponse.json(
     //   { msg: "successful", id: proposalData },
     //   { status: 200 },
     // );
-
     const values = Object.values(proposalData)
     values.unshift(
       decoded.name,
       decoded.email,
        decoded.flag,
       proposal.id,
-      proposal.owner)
+      proposal.posted_by)
     await Promise.all(
       languages.map(async (language) => {
         const proposalKey = `${language.toLowerCase()}proposal`;
@@ -102,9 +101,8 @@ export async function POST(req: NextRequest) {
         values.push(proposalRes.translated);
       }),
     );
-    console.log(proposalData)
     const { rows } = await db.query(
-      `insert into proposals (name,sender,sender_flag,career_id,career_owner,senderlocEn,senderlocam,senderlocfr,senderlocar,enproposal,amproposal,frproposal,arproposal) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id;`,
+      `insert into proposals (name,sender,sender_flag,career_id,career_owner,senderlocEn,senderlocam,senderlocfr,senderlocar,enproposal,arproposal,amproposal,frproposal) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id;`,
       values,
     );
     return NextResponse.json(

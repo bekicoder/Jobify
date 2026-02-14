@@ -21,7 +21,7 @@ const SignUp = ({ setOpen}:propType) => {
   };
   const [type, setType] = useState<checkbox>({
     role: "employee",
-    location: "",
+    location:0,
     flag: "",
   });
 
@@ -61,6 +61,7 @@ const SignUp = ({ setOpen}:propType) => {
     const target = e.target as HTMLFormElement
     const fd = new FormData(target);
     const fdObj = Object.fromEntries(fd.entries());
+    console.log(fdObj)
     const res = await fetch("/api/signup", {
       method: "POST",
       body: JSON.stringify(fdObj),
