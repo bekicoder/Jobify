@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const languages = ["en", "am", "ar", "fr"];
-  
+  console.log("this is the url",process.env.DATABASE_URL)
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
