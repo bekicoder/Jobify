@@ -120,7 +120,18 @@ export async function POST(req: NextRequest) {
       process.env.JWT_SECRET!,
       { expiresIn: "7d" },
     );
-
+    console.log({
+        id: user.id,
+        name: user[column_name],
+        email: user.email,
+        role: role,
+        profile: user.profile,
+        flag: user.flag,
+        enLocation: locationMap.EnLocation,
+        amLocation: locationMap.AmLocation,
+        arLocation: locationMap.ArLocation,
+        frLocation: locationMap.FrLocation,
+      },"dose this contain the role")
     const response = NextResponse.json(
       { message: "successful" },
       { status: 200 },

@@ -116,7 +116,7 @@ export default function NavBar() {
       </button>
 
       {isOpen && (
-        <ul className="absolute mt-2 w-56 bg-white shadow-lg border rounded z-50 max-h-60 overflow-auto">
+        <ul className="absolute mt-2 bg-white shadow-lg border rounded z-50 overflow-auto">
           {languages && languages.map((language:Language) => (
             <li
               key={language.id}
