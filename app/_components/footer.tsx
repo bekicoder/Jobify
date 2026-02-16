@@ -4,11 +4,9 @@ import { useSharedState } from "../SharedStateContext";
 import Link from "next/link";
 export default function Footer() {
   const {content} = useSharedState();
-  const [lang, setLang] = useState<string>("english");
-
   
   return (
-    <footer className="bg-[#0a2540] text-white mt-24">
+    <footer className={`bg-[#0a2540] text-white mt-24`}>
       <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* Logo & Description */}
         <div className="flex flex-col gap-4">
@@ -68,7 +66,7 @@ export default function Footer() {
           <div className="flex gap-3 mt-4">
             <a
               href="#"
-              className="p-2 bg-sky-600 rounded-full hover:bg-sky-400 transition"
+              className="p-2 -sky-600 rounded-full hover:bg-sky-400 transition"
             >
               <i className="fab fa-facebook-f"></i>
             </a>

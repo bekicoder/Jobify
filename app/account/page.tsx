@@ -1,19 +1,19 @@
 "use client";
-import React,{ FormEvent, useEffect, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSharedState } from "../SharedStateContext";
-interface propType{
-  setOpen:React.Dispatch<React.SetStateAction<string>>
+interface propType {
+  setOpen: React.Dispatch<React.SetStateAction<string>>;
 }
-const SignUp = ({ setOpen}:propType) => {
+const SignUp = ({ setOpen }: propType) => {
   type locations = {
     id: number;
     name: string;
     flag: string;
   };
- 
+
   type checkbox = {
     role: string;
     location: number;
@@ -21,7 +21,7 @@ const SignUp = ({ setOpen}:propType) => {
   };
   const [type, setType] = useState<checkbox>({
     role: "employee",
-    location:0,
+    location: 0,
     flag: "",
   });
 
@@ -29,7 +29,7 @@ const SignUp = ({ setOpen}:propType) => {
   const [openedMenu, setOpenedMenu] = useState<string | null>(null);
   const [eye, setEye] = useState(false);
   const [warring, setWarrning] = useState<string>();
-  const {countries,content} = useSharedState()
+  const { countries, content } = useSharedState();
 
   function toggleRoleCheckbox(value: string) {
     setType((prev) => ({ ...prev, role: value }));
@@ -52,16 +52,15 @@ const SignUp = ({ setOpen}:propType) => {
         setOpenedMenu(null);
       }, 300);
     } else {
-
       setOpenedMenu(menu);
     }
   }
-  async function handleSibmit(e:FormEvent) {
+  async function handleSibmit(e: FormEvent) {
     e.preventDefault();
-    const target = e.target as HTMLFormElement
+    const target = e.target as HTMLFormElement;
     const fd = new FormData(target);
     const fdObj = Object.fromEntries(fd.entries());
-    console.log(fdObj)
+    console.log(fdObj);
     const res = await fetch("/api/signup", {
       method: "POST",
       body: JSON.stringify(fdObj),
@@ -71,13 +70,13 @@ const SignUp = ({ setOpen}:propType) => {
     });
     const data = await res.json();
     if (data.message == "successful") {
-       location.assign("/");
+      location.assign("/");
     } else if (data.message == `already exist`) {
       setWarrning("already exist");
     }
   }
   return (
-    <div className="w-full max-w-xl h-full md:h-124 md:rounded-r-2xl flex flex-col items-center bg-white md:px-18 px-10 pt-4">
+    <div className="w-full max-w-xl h-full md:h-124 md:rounded-r-2xl flex flex-col bg-white items-center py-8 md:px-18 px-10 pt-4">
       <strong className="text-2xl text-[#0a2540] mb-2">{content.signUp}</strong>
       <form
         onSubmit={(e) => handleSibmit(e)}
@@ -173,7 +172,7 @@ const SignUp = ({ setOpen}:propType) => {
               className="sr-only"
               required
             />
-            <input name="flag" value={type.flag} className="sr-only" required/>
+            <input name="flag" value={type.flag} className="sr-only" required />
             <i
               className={`fa-solid ${openedMenu == "Location" ? "fa-chevron-up" : "fa-chevron-down"} ml-auto mr-2.5`}
             />
@@ -208,7 +207,7 @@ const SignUp = ({ setOpen}:propType) => {
                   src={c.flag}
                   alt={c.name + " flag"}
                   className="h-fit aspect-video"
-                />{" "}
+                />
                 {c.name}
               </div>
             ))}
@@ -270,7 +269,7 @@ const SignUp = ({ setOpen}:propType) => {
             </label>
           </div>
         </div>
-  
+
         {warring === "already exist" && (
           <p>
             {content.alreadySignedInMessage} &nbsp;
@@ -290,27 +289,25 @@ const SignUp = ({ setOpen}:propType) => {
         </button>
       </form>
       <span>
-        {content.haveAccount} {" "}
+        {content.haveAccount}?&nbsp;&nbsp;
         <span
           className="text-indigo-700 cursor-pointer"
           onClick={() => setOpen("signIn")}
         >
-          {" "}
           {content.logIn}
-        </span>{" "}
+        </span>
       </span>
     </div>
   );
 };
 
-
-const SignIn = ({ setOpen }:propType) => {
+const SignIn = ({ setOpen }: propType) => {
   const [type, setType] = useState<string>();
   const [eye, setEye] = useState(false);
   const [warring, setWarrning] = useState<string>();
   const [openedMenu, setOpenedMenu] = useState<string | null>(null);
   const router = useRouter();
-  const {countries,content} = useSharedState()
+  const { countries, content } = useSharedState();
 
   function toggleCheckbox(type: string) {
     setType(type);
@@ -328,9 +325,9 @@ const SignIn = ({ setOpen }:propType) => {
       setOpenedMenu(menu);
     }
   }
-  const handleSubmit = async (e:FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const target = e.target as HTMLFormElement
+    const target = e.target as HTMLFormElement;
     const fd = new FormData(target);
     const fdObj = Object.fromEntries(fd.entries());
     const res = await fetch("/api/signin", {
@@ -346,9 +343,7 @@ const SignIn = ({ setOpen }:propType) => {
     }
   };
   return (
-    <div
-      className="w-full max-w-xl h-full md:h-124 md:rounded-r-2xl flex flex-col items-center bg-white  md:px-18 px-10 pt-4"
-    >
+    <div className="w-full max-w-xl h-full md:h-124 md:rounded-r-2xl flex flex-col items-center bg-white  md:px-18 px-10 pt-4">
       <strong className="text-2xl text-[#0a2540]">{content.logIn}</strong>
       <form
         onSubmit={(e) => handleSubmit(e)}
@@ -391,7 +386,7 @@ const SignIn = ({ setOpen }:propType) => {
           <div
             onClick={(e) => toggleMenu(e, "role")}
             onBlur={(e) => toggleMenu(e, "role")}
-            className="cursor-pointer flex rounded-lg item-center px-2 hover:bg-yellow-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2"
+            className="cursor-pointer flex rounded-lg item-center px-1 hover:bg-yellow-100  bg-gray-100 items-center pl-2 bg-[#f6f9fc] py-2 gap-2"
           >
             <i className="fa-solid fa-map-marker-alt text-gray-500" />
             {content.role}
@@ -505,10 +500,10 @@ const SignIn = ({ setOpen }:propType) => {
 const Acount = () => {
   const [open, setOpen] = useState<string>("signUp");
   return (
-    <div className="w-full h-screen md:px-8 flex justify-center items-center bg-[#f1f5f9]">
-      <div className="flex flex-row max-w-2xl w-full shadow-lg shadow-gray-300 rounded-2xl">
+    <div className="w-full px-4 md:px-10 h-screen md:px-8 flex justify-center md:items-center bg-white md:bg-[#f1f5f9]">
+      <div className="flex flex-row max-w-2xl w-full md:shadow-lg md:shadow-gray-300 rounded-2xl">
         <div
-          className="w-50 bg-cover flex-none block rounded-l-2xl bg-center"
+          className="w-50 hidden md:block bg-cover flex-none rounded-l-2xl bg-center"
           style={{
             backgroundImage:
               "url('/young-african-american-builder-man-wearing-construction-uniform-safety-helmet-holding-clipboard-pen-going-make-notes-with-friendly-smile-standing-blue.jpg')",

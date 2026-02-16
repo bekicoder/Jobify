@@ -5,9 +5,8 @@ import Link from "next/link";
 import { useSharedState } from "../SharedStateContext";
 const Hero = () => {
   const [user, setUser] = useState<{ role?: string } | null>(null);
-  const {content} = useSharedState();
-  const {lang,setLang} = useSharedState();
-
+  const {content,textColor,bgColor,mode} = useSharedState();
+  const [homeText,setHomeT] = useState('[#0a2540]')
   // Load user info
   useEffect(() => {
     const fetchUser = async () => {
@@ -23,11 +22,17 @@ const Hero = () => {
     };
     fetchUser();
   }, []);
-
+  useEffect(()=>{
+    if(mode == "dark"){
+    setHomeT("white")
+  }if(mode == "light"){
+    setHomeT("[#0a2540]")
+  }
+  },[mode])
   return (
-    <div className="w-full flex flex-col md:flex-row overflow-auto">
+    <div className={`w-full flex flex-col md:flex-row overflow-auto bg-${bgColor} text-${textColor}`}>
       <div className="px-10 pt-24 wrap-break-word flex flex-1 flex-col gap-5">
-        <h1 className="font-bold text-5xl text-[#0a2540] leading-tight">
+        <h1 className={`font-bold text-5xl text-${homeText} leading-tight`}>
           {content?.hero_header}
         </h1>
         <p>{content?.hero_paragraph}</p>

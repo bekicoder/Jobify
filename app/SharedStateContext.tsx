@@ -59,6 +59,12 @@ type SharedStateType = {
   teams: teamsType[];
   countries: countriesType[];
   setCountries: (val: countriesType[]) => void;
+  mode:string;
+  setMode:(arg0:string)=> void;
+  textColor:string;
+  bgColor:string;
+  grayText:string;
+  lightDark:string;
 };
 
 const SharedStateContext = createContext<SharedStateType | undefined>(
@@ -72,6 +78,11 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [jobCategories, setCatagories] = useState<JobCategory[]>(categoriesEn);
   const [teams, setTeam] = useState<teamsType[]>(teamsEn);
   const [countries, setCountries] = useState<countriesType[]>(countriesEn);
+  const [mode,setMode] = useState("light")
+  const [textColor,setTextcolor] = useState("black")
+  const [bgColor,setbgcolor] = useState("white")
+  const [grayText,setgrayText] = useState("gray-700")
+  const [lightDark,setLightD] = useState("white")
   useEffect(() => {
     if (lang == "Am") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -100,6 +111,21 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
       setTeam(teamsEn);
     }
   }, [lang]);
+  useEffect(()=>{
+    if(mode == "dark"){
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTextcolor("white")
+    setbgcolor("[#121212]")
+    setgrayText("white")
+    setLightD("[#1E1E1E]")
+  }if(mode == "light"){
+    setTextcolor("black")
+    setbgcolor("white")
+    setgrayText("gray-700")
+    setLightD("[#f6f9fc]")
+  }
+  },[mode])
+  
   return (
     <SharedStateContext.Provider
       value={{
@@ -112,6 +138,12 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
         jobTypes,
         countries,
         setCountries,
+        mode,
+        setMode,
+        textColor,
+        bgColor,
+        grayText,
+        lightDark,
       }}
     >
       {children}

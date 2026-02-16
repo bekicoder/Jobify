@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ msg: `id is required` }, { status: 401 });
     }
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ msg: "unauthorized" }, { status: 401 });
     }
     const data = jwt.verify(token, process.env.JWT_SECRET!);
     const decoded = data as JwtPayload;

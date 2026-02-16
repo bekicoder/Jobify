@@ -95,7 +95,7 @@ const teamsEn = [
     color: "bg-pink-500",
     title: "Team Lead",
   },
-  {
+  /*{
     name: "Alexander Carter",
     img: "/photo-1599566150163-29194dcaad36.avif",
     description:
@@ -114,7 +114,7 @@ const teamsEn = [
     halfStar: true,
     color: "bg-yellow-500",
     title: "Assistant",
-  },
+  },*/
 ];
 const categoriesEn = [
     { id: 1, name: "Healthcare & Medical" },
